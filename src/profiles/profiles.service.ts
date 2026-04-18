@@ -1,7 +1,12 @@
-import { Injectable, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  HttpException,
+  HttpStatus,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { v7 as uuidv7 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import { Profile } from './entities/profile.entity';
 import { ExternalService } from '../external/external.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
@@ -41,13 +46,16 @@ export class ProfilesService {
       ]);
 
       // Find country with highest probability
-      const topCountry = nationalityData.country.reduce((prev, current) => 
-        (prev.probability > current.probability) ? prev : current
+      const topCountry = nationalityData.country.reduce((prev, current) =>
+        prev.probability > current.probability ? prev : current,
       );
 
       if (genderData.gender === null || ageData.age === null) {
         throw new HttpException(
-          { status: 'error', message: 'External APIs returned incomplete data' },
+          {
+            status: 'error',
+            message: 'External APIs returned incomplete data',
+          },
           HttpStatus.BAD_GATEWAY,
         );
       }
@@ -56,7 +64,7 @@ export class ProfilesService {
 
       // Create new profile
       const profile = this.profileRepository.create({
-        id: uuidv7(),
+        id: uuidv4(),
         name: normalizedName,
         gender: genderData.gender,
         gender_probability: genderData.probability,
@@ -87,7 +95,7 @@ export class ProfilesService {
 
   async getProfileById(id: string) {
     const profile = await this.profileRepository.findOne({ where: { id } });
-    
+
     if (!profile) {
       throw new NotFoundException({
         status: 'error',
@@ -103,31 +111,31 @@ export class ProfilesService {
 
   async getAllProfiles(queryParams: QueryProfilesDto) {
     const query = this.profileRepository.createQueryBuilder('profile');
-    
+
     if (queryParams.gender) {
-      query.andWhere('LOWER(profile.gender) = LOWER(:gender)', { 
-        gender: queryParams.gender 
+      query.andWhere('LOWER(profile.gender) = LOWER(:gender)', {
+        gender: queryParams.gender,
       });
     }
-    
+
     if (queryParams.country_id) {
-      query.andWhere('LOWER(profile.country_id) = LOWER(:country_id)', { 
-        country_id: queryParams.country_id 
+      query.andWhere('LOWER(profile.country_id) = LOWER(:country_id)', {
+        country_id: queryParams.country_id,
       });
     }
-    
+
     if (queryParams.age_group) {
-      query.andWhere('LOWER(profile.age_group) = LOWER(:age_group)', { 
-        age_group: queryParams.age_group 
+      query.andWhere('LOWER(profile.age_group) = LOWER(:age_group)', {
+        age_group: queryParams.age_group,
       });
     }
-    
+
     const profiles = await query.getMany();
-    
+
     return {
       status: 'success',
       count: profiles.length,
-      data: profiles.map(profile => ({
+      data: profiles.map((profile) => ({
         id: profile.id,
         name: profile.name,
         gender: profile.gender,
@@ -140,14 +148,14 @@ export class ProfilesService {
 
   async deleteProfile(id: string) {
     const result = await this.profileRepository.delete(id);
-    
+
     if (result.affected === 0) {
       throw new NotFoundException({
         status: 'error',
         message: 'Profile not found',
       });
     }
-    
+
     return { status: 'success' };
   }
 

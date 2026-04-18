@@ -16,19 +16,20 @@ import { Profile } from './profiles/entities/profile.entity';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get('SUPABASE_HOST'),
-        port: parseInt(configService.get('SUPABASE_PORT') || '5432'),
-        username: configService.get('SUPABASE_USER'),
-        password: configService.get('SUPABASE_PASSWORD'),
-        database: configService.get('SUPABASE_DATABASE'),
+        host: configService.get('DATABASE_HOST'),
+        port: parseInt(configService.get('DATABASE_PORT') || '5432'),
+        username: configService.get('DATABASE_USER'),
+        password: configService.get('DATABASE_PASSWORD'),
+        database: configService.get('DATABASE_NAME'),
         entities: [Profile],
-        synchronize: true, // This will create tables automatically
-        ssl: {
-          rejectUnauthorized: false, // Required for Supabase
-        },
-        extra: {
-          max: 20, // Connection pool size
-        },
+        synchronize: true, // Creates tables automatically
+        ssl:
+          configService.get('DATABASE_SSL') === 'true'
+            ? {
+                rejectUnauthorized: false,
+              }
+            : false,
+        logging: configService.get('NODE_ENV') !== 'production',
       }),
     }),
     ProfilesModule,
