@@ -21,13 +21,7 @@ export class ExternalService {
 
       console.log(`Genderize response:`, response.data);
 
-      // Check for valid response
-      if (
-        !response.data ||
-        response.data.gender === null ||
-        response.data.count === 0
-      ) {
-        console.error(`Invalid gender data for ${name}:`, response.data);
+      if (!response.data) {
         throw new HttpException(
           {
             status: 'error',
@@ -65,8 +59,7 @@ export class ExternalService {
 
       console.log(`Agify response:`, response.data);
 
-      if (!response.data || response.data.age === null) {
-        console.error(`Invalid age data for ${name}:`, response.data);
+      if (!response.data) {
         throw new HttpException(
           { status: 'error', message: 'Agify returned an invalid response' },
           HttpStatus.BAD_GATEWAY,
@@ -97,12 +90,7 @@ export class ExternalService {
 
       console.log(`Nationalize response:`, response.data);
 
-      if (
-        !response.data ||
-        !response.data.country ||
-        response.data.country.length === 0
-      ) {
-        console.error(`Invalid nationality data for ${name}:`, response.data);
+      if (!response.data) {
         throw new HttpException(
           {
             status: 'error',

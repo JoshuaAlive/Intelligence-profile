@@ -40,36 +40,50 @@ export class ProfilesService {
     // Fetch data from external APIs
     try {
       const [genderData, ageData, nationalityData] = await Promise.all([
-        this.externalService.fetchGenderData(normalizedName),
-        this.externalService.fetchAgeData(normalizedName),
-        this.externalService.fetchNationalityData(normalizedName),
+        this.externalService
+          .fetchGenderData(normalizedName)
+          .catch(() => ({ gender: 'unknown', probability: 0, count: 0 })),
+        this.externalService
+          .fetchAgeData(normalizedName)
+          .catch(() => ({ age: 0 })),
+        this.externalService
+          .fetchNationalityData(normalizedName)
+          .catch(() => ({ country: [] })),
       ]);
 
-      // Find country with highest probability
-      const topCountry = nationalityData.country.reduce((prev, current) =>
-        prev.probability > current.probability ? prev : current,
-      );
+      const countries = Array.isArray(nationalityData.country)
+        ? nationalityData.country
+        : [];
 
-      if (genderData.gender === null || ageData.age === null) {
-        throw new HttpException(
-          {
-            status: 'error',
-            message: 'External APIs returned incomplete data',
-          },
-          HttpStatus.BAD_GATEWAY,
-        );
-      }
+      // Find country with highest probability, or fall back when nationalize has no candidates.
+      const topCountry =
+        countries.length > 0
+          ? countries.reduce((prev, current) =>
+              prev.probability > current.probability ? prev : current,
+            )
+          : { country_id: 'unknown', probability: 0 };
 
-      const ageGroup = this.externalService.determineAgeGroup(ageData.age);
+      const resolvedAge =
+        typeof ageData.age === 'number' && ageData.age >= 0 ? ageData.age : 0;
+      const resolvedGender =
+        typeof genderData.gender === 'string' && genderData.gender.trim()
+          ? genderData.gender
+          : 'unknown';
+      const resolvedGenderProbability =
+        typeof genderData.probability === 'number' ? genderData.probability : 0;
+      const resolvedSampleSize =
+        typeof genderData.count === 'number' ? genderData.count : 0;
+
+      const ageGroup = this.externalService.determineAgeGroup(resolvedAge);
 
       // Create new profile
       const profile = this.profileRepository.create({
         id: uuidv4(),
         name: normalizedName,
-        gender: genderData.gender,
-        gender_probability: genderData.probability,
-        sample_size: genderData.count,
-        age: ageData.age,
+        gender: resolvedGender,
+        gender_probability: resolvedGenderProbability,
+        sample_size: resolvedSampleSize,
+        age: resolvedAge,
         age_group: ageGroup,
         country_id: topCountry.country_id,
         country_probability: topCountry.probability,
@@ -135,14 +149,7 @@ export class ProfilesService {
     return {
       status: 'success',
       count: profiles.length,
-      data: profiles.map((profile) => ({
-        id: profile.id,
-        name: profile.name,
-        gender: profile.gender,
-        age: profile.age,
-        age_group: profile.age_group,
-        country_id: profile.country_id,
-      })),
+      data: profiles.map((profile) => this.formatProfileResponse(profile)),
     };
   }
 

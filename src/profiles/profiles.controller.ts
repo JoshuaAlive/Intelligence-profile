@@ -18,7 +18,7 @@ import { QueryProfilesDto } from './dto/query-profiles.dto';
 export class ProfilesController {
   constructor(private readonly profilesService: ProfilesService) {}
 
-  @Get()
+  @Get('status')
   getRoot() {
     return {
       status: 'success',
