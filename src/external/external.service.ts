@@ -7,29 +7,27 @@ export class ExternalService {
   private readonly agifyUrl = 'https://api.agify.io';
   private readonly nationalizeUrl = 'https://api.nationalize.io';
 
-  private getErrorMessage(error: unknown): string {
-    if (error instanceof Error) {
-      return error.message;
-    }
-    return String(error);
-  }
-
   async fetchGenderData(name: string) {
     try {
+      console.log(`Fetching gender data for: ${name}`);
       const response = await axios.get(this.genderizeUrl, {
         params: { name },
-        timeout: 10000, // 10 second timeout
+        timeout: 15000,
         headers: {
           'User-Agent': 'ProfileIntelligenceService/1.0',
+          Accept: 'application/json',
         },
       });
 
-      // Check if we have valid data
+      console.log(`Genderize response:`, response.data);
+
+      // Check for valid response
       if (
         !response.data ||
-        !response.data.gender ||
+        response.data.gender === null ||
         response.data.count === 0
       ) {
+        console.error(`Invalid gender data for ${name}:`, response.data);
         throw new HttpException(
           {
             status: 'error',
@@ -40,8 +38,12 @@ export class ExternalService {
       }
 
       return response.data;
-    } catch (error) {
-      console.error('Genderize API error:', this.getErrorMessage(error));
+    } catch (error: any) {
+      console.error(`Genderize API error for ${name}:`, error.message);
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      }
       throw new HttpException(
         { status: 'error', message: 'Genderize returned an invalid response' },
         HttpStatus.BAD_GATEWAY,
@@ -51,15 +53,20 @@ export class ExternalService {
 
   async fetchAgeData(name: string) {
     try {
+      console.log(`Fetching age data for: ${name}`);
       const response = await axios.get(this.agifyUrl, {
         params: { name },
-        timeout: 10000,
+        timeout: 15000,
         headers: {
           'User-Agent': 'ProfileIntelligenceService/1.0',
+          Accept: 'application/json',
         },
       });
 
+      console.log(`Agify response:`, response.data);
+
       if (!response.data || response.data.age === null) {
+        console.error(`Invalid age data for ${name}:`, response.data);
         throw new HttpException(
           { status: 'error', message: 'Agify returned an invalid response' },
           HttpStatus.BAD_GATEWAY,
@@ -67,8 +74,8 @@ export class ExternalService {
       }
 
       return response.data;
-    } catch (error) {
-      console.error('Agify API error:', this.getErrorMessage(error));
+    } catch (error: any) {
+      console.error(`Agify API error for ${name}:`, error.message);
       throw new HttpException(
         { status: 'error', message: 'Agify returned an invalid response' },
         HttpStatus.BAD_GATEWAY,
@@ -78,19 +85,24 @@ export class ExternalService {
 
   async fetchNationalityData(name: string) {
     try {
+      console.log(`Fetching nationality data for: ${name}`);
       const response = await axios.get(this.nationalizeUrl, {
         params: { name },
-        timeout: 10000,
+        timeout: 15000,
         headers: {
           'User-Agent': 'ProfileIntelligenceService/1.0',
+          Accept: 'application/json',
         },
       });
+
+      console.log(`Nationalize response:`, response.data);
 
       if (
         !response.data ||
         !response.data.country ||
         response.data.country.length === 0
       ) {
+        console.error(`Invalid nationality data for ${name}:`, response.data);
         throw new HttpException(
           {
             status: 'error',
@@ -101,8 +113,8 @@ export class ExternalService {
       }
 
       return response.data;
-    } catch (error) {
-      console.error('Nationalize API error:', this.getErrorMessage(error));
+    } catch (error: any) {
+      console.error(`Nationalize API error for ${name}:`, error.message);
       throw new HttpException(
         {
           status: 'error',
