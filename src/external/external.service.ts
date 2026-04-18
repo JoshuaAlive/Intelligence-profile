@@ -6,20 +6,18 @@ export class ExternalService {
   private readonly genderizeUrl = 'https://api.genderize.io';
   private readonly agifyUrl = 'https://api.agify.io';
   private readonly nationalizeUrl = 'https://api.nationalize.io';
+  private readonly requestTimeoutMs = 2500;
 
   async fetchGenderData(name: string) {
     try {
-      console.log(`Fetching gender data for: ${name}`);
       const response = await axios.get(this.genderizeUrl, {
         params: { name },
-        timeout: 15000,
+        timeout: this.requestTimeoutMs,
         headers: {
           'User-Agent': 'ProfileIntelligenceService/1.0',
           Accept: 'application/json',
         },
       });
-
-      console.log(`Genderize response:`, response.data);
 
       if (!response.data) {
         throw new HttpException(
@@ -47,17 +45,14 @@ export class ExternalService {
 
   async fetchAgeData(name: string) {
     try {
-      console.log(`Fetching age data for: ${name}`);
       const response = await axios.get(this.agifyUrl, {
         params: { name },
-        timeout: 15000,
+        timeout: this.requestTimeoutMs,
         headers: {
           'User-Agent': 'ProfileIntelligenceService/1.0',
           Accept: 'application/json',
         },
       });
-
-      console.log(`Agify response:`, response.data);
 
       if (!response.data) {
         throw new HttpException(
@@ -78,17 +73,14 @@ export class ExternalService {
 
   async fetchNationalityData(name: string) {
     try {
-      console.log(`Fetching nationality data for: ${name}`);
       const response = await axios.get(this.nationalizeUrl, {
         params: { name },
-        timeout: 15000,
+        timeout: this.requestTimeoutMs,
         headers: {
           'User-Agent': 'ProfileIntelligenceService/1.0',
           Accept: 'application/json',
         },
       });
-
-      console.log(`Nationalize response:`, response.data);
 
       if (!response.data) {
         throw new HttpException(
